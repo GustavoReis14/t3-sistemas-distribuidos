@@ -33,7 +33,6 @@ public class CausalMulticastDiscovery extends Thread {
         byte[] buf = new byte[56];
 
         try {
-            System.out.println("[DISCOVERY] Service started");
             multicastSocket.joinGroup(group);
 
             sendHelloMessage();
@@ -55,7 +54,7 @@ public class CausalMulticastDiscovery extends Thread {
                         }
 
                         if(!added) {
-                            System.out.println(String.format("[DISCOVERY] Client %s connected", client.getHostAddress()));
+                            System.out.println(String.format("Middleware - Cliente Conectado ", client.getHostAddress()));
 
                             discoveredIpAddresses.add(client);
                             discoveredIpAddresses.sort(comparator);
@@ -69,7 +68,7 @@ public class CausalMulticastDiscovery extends Thread {
         catch (IOException e) {
             e.printStackTrace();
 
-            System.out.println("[DISCOVERY][ERROR] Received exception on discovery thread");
+            System.out.println("Problema no Discovery ");
         }
     }
 

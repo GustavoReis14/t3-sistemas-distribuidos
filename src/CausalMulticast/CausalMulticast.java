@@ -42,20 +42,19 @@ public class CausalMulticast implements ICausalMulticastReceiver {
         discovery.start();
     }
 
-    public void mcsend(String msg) throws IOException {
+    public void mcsend(String msg, ICausalMulticast client) throws IOException {
         if(indexOfInstanceInClockArray < 0) {
             initializeClockArray();
         }
 
-        Scanner scanner = new Scanner(System.in);
-        ChanelMessage chanelMessage = new ChanelMessage(msg, clockArray);
+        String[] splitMessage = msg.split("-");
+        ChanelMessage chanelMessage = new ChanelMessage(splitMessage.length > 1 ? splitMessage[1] : msg, clockArray);
         byte[] serializedMessage = chanelMessage.serialize();
         List<InetAddress> toSend = new ArrayList<>();
 
         for(InetAddress address : discovery.getDiscoveredIpAddresses()) {
-            System.out.print(String.format("Send to %s (Y/n)? ", address));
 
-            if(scanner.nextLine().equalsIgnoreCase("n")) {
+            if(splitMessage[0].toLowerCase().equals("delay")) {
                 notSentMessages.add(new NotSentMessage(serializedMessage, address));
             }
             else {
@@ -72,8 +71,6 @@ public class CausalMulticast implements ICausalMulticastReceiver {
     }
 
     private void initializeClockArray() {
-        System.out.println("[MIDDLEWARE] Initializing clock array");
-
         List<InetAddress> allIps = discovery.getDiscoveredIpAddresses();
 
         this.clockArray = new int[allIps.size()];
@@ -103,11 +100,11 @@ public class CausalMulticast implements ICausalMulticastReceiver {
                 initializeClockArray();
             }
 
-            System.out.println("[DEBUG] Middleware received message: "+message.toString()+"\t Current local clock: "+ Arrays.toString(clockArray));
+            System.out.println("Middleware - Mensagem recebida: "+message.toString()+"\t Clock: "+ Arrays.toString(clockArray));
 
             if(!messageCanBeDelivered(message)) {
                 delayedMessages.add(new DelayedMessages(message, sender));
-                System.out.printf("[%s][DELAYED] Message %s was delayed. Current delayed: %s\n", sender.getHostAddress(), message.getContent(), Arrays.toString(delayedMessages.toArray()));
+                System.out.printf("%s - Mensagem %s foi atrasada. delay: %s\n", sender.getHostAddress(), message.getContent(), Arrays.toString(delayedMessages.toArray()));
                 return;
             }
 
@@ -145,7 +142,6 @@ public class CausalMulticast implements ICausalMulticastReceiver {
                 deliverMessage(delayedMessage.getMessage(), delayedMessage.getSender());
                 delayedMessages.remove(i);
 
-                // Since we delivered a message, we have to check all of them again
                 checkDelayedMessages();
                 break;
             }
@@ -159,7 +155,7 @@ public class CausalMulticast implements ICausalMulticastReceiver {
                 byte[] messageBytes = message.getSerializedMessage();
                 DatagramPacket packet = new DatagramPacket(messageBytes, messageBytes.length, message.getDestination(), UNICAST_PORT);
 
-                System.out.println(String.format("[MIDDLEWARE] Sent delayed message to %s", message.getDestination().getHostAddress()));
+                System.out.println(String.format("Delay - Mensagem entregue %s", message.getDestination().getHostAddress()));
 
                 datagramSocket.send(packet);
                 notSentMessages.remove(0);

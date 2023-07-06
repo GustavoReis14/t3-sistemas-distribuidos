@@ -25,17 +25,17 @@ public class ClientApplication implements ICausalMulticast {
         while(true) {
             String input = scanner.nextLine();
 
-            if(input.equals("send")) {
+            if(input.toLowerCase().equals("sync")) {
                 middleware.sendAllNotSentMessages();
             }
-            else if(input.length() == 0 || input.charAt(0) != '>') {
-                System.out.println("[WARN] Unrecognized command. Messages should start with '>'");
+            else if(input.length() == 0) {
+                System.out.println("MENSAGEM INVALIDA");
             }
             else if(middleware.hasDelayedMessages()) {
-                System.out.println("[ERROR] Cannot send messages having delayed ones.");
+                System.out.println("NÃO PODE SER ENTREGUE POIS EXISTEM MENSAGENS COM DELAY");
             }
             else {
-                middleware.mcsend(input.substring(1));
+                middleware.mcsend(input, this);
             }
         }
     }
